@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Robot Login</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg1: #1a1a4e;
+      --bg2: #0d2b6b;
+      --bg3: #163560;
+      --card-bg: rgba(255,255,255,0.13);
+      --card-border: rgba(255,255,255,0.28);
+      --card-shadow: 0 32px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.12) inset;
+      --input-bg: rgba(255,255,255,0.10);
+      --input-border: rgba(255,255,255,0.22);
+      --accent: #4f9cff;
+      --accent2: #a78bfa;
+      --text: #e8f0ff;
+      --subtext: #8facd8;
+      --robot-body: #5b8dee;
+      --robot-face: #d6e8ff;
+      --robot-eye: #1a2550;
+      --robot-pupil: #4f9cff;
+      --robot-blush: rgba(255,120,150,0.45);
+      --robot-angry: #f53f5d;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(ellipse at 20% 60%, #1e3a8a 0%, #0f172a 55%, #0d1b4b 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Floating Particles ── */
+    #particles-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Card ── */
+    .card-wrap {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(28px) saturate(1.6);
+      -webkit-backdrop-filter: blur(28px) saturate(1.6);
+      border-radius: 36px;
+      padding: 44px 44px 40px;
+      width: min(420px, 92vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;
+    }
+
+    .login-card.shake {
+      animation: shake 0.55s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translateX(-5px) rotate(-1deg); }
+      20%, 80% { transform: translateX(8px)  rotate(1.5deg); }
+      30%, 50%, 70% { transform: translateX(-8px) rotate(-1.5deg); }
+      40%, 60% { transform: translateX(8px)  rotate(1deg); }
+      100% { transform: translateX(0) rotate(0deg); }
+    }
+
+    .login-card.celebrate {
+      animation: jump 0.65s cubic-bezier(.4,2,.5,1) both;
+    }
+    @keyframes jump {
+      0%   { transform: translateY(0) scale(1); }
+      35%  { transform: translateY(-38px) scale(1.04, 0.97); }
+      55%  { transform: translateY(-44px) scale(0.97, 1.04); }
+      75%  { transform: translateY(-18px) scale(1.02, 0.98); }
+      90%  { transform: translateY(-6px); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* ── Robot SVG Container ── */
+    .robot-wrap {
+      width: 180px;
+      height: 200px;
+      margin-bottom: -10px;
+      position: relative;
+      user-select: none;
+    }
+
+    #robot-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 16px 32px rgba(79,156,255,0.35));
+    }
+
+    /* ── Form Elements ── */
+    .form-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .form-subtitle {
+      font-size: 0.85rem;
+      color: var(--subtext);
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .input-group {
+      width: 100%;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--subtext);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .input-group input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-size: 0.97rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.22s, background 0.22s, box-shadow 0.22s;
+      backdrop-filter: blur(8px);
+    }
+    .input-group input::placeholder { color: rgba(143,172,216,0.5); }
+    .input-group input:focus {
+      border-color: var(--accent);
+      background: rgba(79,156,255,0.10);
+      box-shadow: 0 0 0 3px rgba(79,156,255,0.18);
+    }
+
+    .btn-login {
+      width: 100%;
+      margin-top: 8px;
+      padding: 15px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #4f9cff 0%, #7c6af7 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(79,156,255,0.35);
+      transition: transform 0.14s, box-shadow 0.14s, filter 0.14s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-login:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 32px rgba(79,156,255,0.45); }
+    .btn-login:active { transform: scale(0.98); }
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+      border-radius: inherit;
+    }
+
+    .error-msg {
+      font-size: 0.8rem;
+      color: #ff7a8a;
+      margin-top: 10px;
+      min-height: 18px;
+      text-align: center;
+      transition: opacity 0.2s;
+      font-weight: 500;
+    }
+
+    /* ── Success Overlay ── */
+    #success-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: rgba(10,20,60,0.92);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    #success-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #success-overlay .success-robot {
+      font-size: 5rem;
+      animation: bounce-emoji 0.7s ease infinite alternate;
+      filter: drop-shadow(0 0 24px #4f9cff);
+    }
+    @keyframes bounce-emoji {
+      from { transform: translateY(0) rotate(-8deg); }
+      to   { transform: translateY(-18px) rotate(8deg); }
+    }
+    #success-overlay h1 {
+      margin-top: 20px;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 0 32px #4f9cffaa;
+    }
+    #success-overlay p {
+      margin-top: 8px;
+      font-size: 1rem;
+      color: #8facd8;
+    }
+    #success-overlay button {
+      margin-top: 28px;
+      padding: 12px 36px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg,#4f9cff,#7c6af7);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(79,156,255,0.4);
+    }
+
+    /* ── Confetti Canvas ── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 190;
+      pointer-events: none;
+    }
+
+    /* ── Hint ── */
+    .hint {
+      margin-top: 16px;
+      font-size: 0.75rem;
+      color: rgba(143,172,216,0.55);
+      text-align: center;
+    }
+    .hint span { color: rgba(143,172,216,0.85); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ── Success Overlay ── -->
+<div id="success-overlay">
+  <div class="success-robot">🤖</div>
+  <h1>Welcome Back, Human! 🤖</h1>
+  <p>Authentication successful. Beep boop!</p>
+  <button onclick="resetPage()">← Back to Login</button>
+</div>
+
+<!-- ── Main Card ── -->
+<div class="card-wrap">
+  <div class="robot-wrap">
+    <svg id="robot-svg" viewBox="0 0 180 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyGrad" cx="40%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="#7eb3ff"/>
+          <stop offset="100%" stop-color="#3a72d4"/>
+        </radialGradient>
+        <radialGradient id="headGrad" cx="40%" cy="28%" r="68%">
+          <stop offset="0%" stop-color="#a8c8ff"/>
+          <stop offset="100%" stop-color="#4a82e4"/>
+        </radialGradient>
+        <radialGradient id="faceGrad" cx="42%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#f0f8ff"/>
+          <stop offset="100%" stop-color="#c8deff"/>
+        </radialGradient>
+        <radialGradient id="eyeGlowL" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#90c8ff"/>
+          <stop offset="100%" stop-color="#4f9cff" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="eyeGlowR" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#90c8ff"/>
+          <stop offset="100%" stop-color="#4f9cff" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softShadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#1a2550" flood-opacity="0.35"/>
+        </filter>
+        <clipPath id="faceClip">
+          <rect x="28" y="36" width="124" height="90" rx="28"/>
+        </clipPath>
+      </defs>
+
+      <!-- ── Antenna ── -->
+      <line id="antenna-line" x1="90" y1="36" x2="90" y2="18" stroke="#5b8dee" stroke-width="4" stroke-linecap="round"/>
+      <circle id="antenna-ball" cx="90" cy="13" r="7" fill="#4f9cff" filter="url(#glow)"/>
+      <circle cx="90" cy="13" r="3.5" fill="#c8e8ff"/>
+
+      <!-- ── Head ── -->
+      <rect id="robot-head" x="28" y="36" width="124" height="90" rx="28" fill="url(#headGrad)" filter="url(#softShadow)"/>
+      <!-- head shine -->
+      <ellipse cx="72" cy="48" rx="22" ry="9" fill="rgba(255,255,255,0.22)" transform="rotate(-15,72,48)"/>
+
+      <!-- ── Face Plate ── -->
+      <rect id="face-plate" x="36" y="44" width="108" height="74" rx="20" fill="url(#faceGrad)"/>
+
+      <!-- ── Ear bolts ── -->
+      <circle cx="28" cy="82" r="7" fill="#3a72d4" stroke="#5b8dee" stroke-width="2"/>
+      <circle cx="28" cy="82" r="3" fill="#4f9cff"/>
+      <circle cx="152" cy="82" r="7" fill="#3a72d4" stroke="#5b8dee" stroke-width="2"/>
+      <circle cx="152" cy="82" r="3" fill="#4f9cff"/>
+
+      <!-- ── Eyes (sockets) ── -->
+      <circle id="eye-socket-l" cx="67" cy="76" r="16" fill="#1a2550" opacity="0.9"/>
+      <circle id="eye-socket-r" cx="113" cy="76" r="16" fill="#1a2550" opacity="0.9"/>
+      <!-- eye glow rings -->
+      <circle cx="67" cy="76" r="16" fill="url(#eyeGlowL)" opacity="0.4"/>
+      <circle cx="113" cy="76" r="16" fill="url(#eyeGlowR)" opacity="0.4"/>
+
+      <!-- ── Pupils (moved by JS) ── -->
+      <g id="pupil-l-group">
+        <circle id="pupil-l" cx="67" cy="76" r="8" fill="#4f9cff"/>
+        <circle id="shine-l" cx="71" cy="72" r="3" fill="rgba(255,255,255,0.85)"/>
+      </g>
+      <g id="pupil-r-group">
+        <circle id="pupil-r" cx="113" cy="76" r="8" fill="#4f9cff"/>
+        <circle id="shine-r" cx="117" cy="72" r="3" fill="rgba(255,255,255,0.85)"/>
+      </g>
+
+      <!-- ── Blush ── -->
+      <ellipse id="blush-l" cx="50" cy="96" rx="10" ry="6" fill="rgba(255,120,150,0.35)" opacity="0"/>
+      <ellipse id="blush-r" cx="130" cy="96" rx="10" ry="6" fill="rgba(255,120,150,0.35)" opacity="0"/>
+
+      <!-- ── Mouth group ── -->
+      <g id="mouth-group">
+        <!-- Neutral line -->
+        <path id="mouth-neutral" d="M 74 102 Q 90 108 106 102" stroke="#3a72d4" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="1"/>
+        <!-- Smile -->
+        <path id="mouth-smile" d="M 70 100 Q 90 116 110 100" stroke="#3a72d4" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0"/>
+        <!-- Angry (frown) -->
+        <path id="mouth-angry" d="M 72 108 Q 90 96 108 108" stroke="#cc2244" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0"/>
+        <!-- Excited O -->
+        <ellipse id="mouth-excited" cx="90" cy="104" rx="8" ry="9" fill="#3a72d4" opacity="0"/>
+      </g>
+
+      <!-- ── Angry eyebrows ── -->
+      <g id="brows-angry" opacity="0">
+        <line x1="52" y1="58" x2="78" y2="64" stroke="#cc2244" stroke-width="4" stroke-linecap="round"/>
+        <line x1="128" y1="58" x2="102" y2="64" stroke="#cc2244" stroke-width="4" stroke-linecap="round"/>
+      </g>
+
+      <!-- ── Hands / Cover Eyes ── -->
+      <!-- Left hand -->
+      <g id="hand-l" opacity="0">
+        <rect x="12" y="58" width="52" height="38" rx="16" fill="url(#bodyGrad)" filter="url(#softShadow)"/>
+        <circle cx="26" cy="57" r="8" fill="url(#bodyGrad)"/>
+        <circle cx="38" cy="53" r="8" fill="url(#bodyGrad)"/>
+        <circle cx="50" cy="53" r="8" fill="url(#bodyGrad)"/>
+        <circle cx="60" cy="57" r="8" fill="url(#bodyGrad)"/>
+        <!-- knuckle lines -->
+        <line x1="26" y1="66" x2="26" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="38" y1="66" x2="38" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="50" y1="66" x2="50" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <!-- Right hand -->
+      <g id="hand-r" opacity="0">
+        <rect x="116" y="58" width="52" height="38" rx="16" fill="url(#bodyGrad)" filter="url(#softShadow)"/>
+        <circle cx="120" cy="57" r="8" fill="url(#bodyGrad)"/>
+        <circle cx="130" cy="53" r="8" fill="url(#bodyGrad)"/>
+        <circle cx="142" cy="53" r="8" fill="url(#bodyGrad)"/>
+        <circle cx="154" cy="57" r="8" fill="url(#bodyGrad)"/>
+        <!-- knuckle lines -->
+        <line x1="130" y1="66" x2="130" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="142" y1="66" x2="142" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="154" y1="66" x2="154" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+      </g>
+
+      <!-- ── Body ── -->
+      <rect id="robot-body" x="44" y="130" width="92" height="62" rx="22" fill="url(#bodyGrad)" filter="url(#softShadow)"/>
+      <!-- body shine -->
+      <ellipse cx="78" cy="140" rx="18" ry="6" fill="rgba(255,255,255,0.18)" transform="rotate(-10,78,140)"/>
+      <!-- chest panel -->
+      <rect x="60" y="142" width="60" height="36" rx="10" fill="rgba(26,37,80,0.35)"/>
+      <!-- chest lights -->
+      <circle id="light1" cx="75" cy="154" r="5" fill="#4f9cff" opacity="0.9"/>
+      <circle id="light2" cx="90" cy="154" r="5" fill="#a78bfa" opacity="0.9"/>
+      <circle id="light3" cx="105" cy="154" r="5" fill="#4f9cff" opacity="0.9"/>
+      <!-- chest bar -->
+      <rect x="68" y="165" width="44" height="7" rx="3.5" fill="rgba(255,255,255,0.15)"/>
+      <rect id="chest-bar-fill" x="68" y="165" width="22" height="7" rx="3.5" fill="#4f9cff" opacity="0.7"/>
+
+      <!-- ── Neck ── -->
+      <rect x="80" y="124" width="20" height="14" rx="6" fill="#3a72d4"/>
+    </svg>
+  </div>
+
+  <div class="login-card" id="login-card">
+    <div class="form-title">Hello, Human! 👋</div>
+    <div class="form-subtitle">Sign in to continue — I won't bite. (Probably)</div>
+
+    <div class="input-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="Enter your username" autocomplete="off"/>
+    </div>
+    <div class="input-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="off"/>
+    </div>
+
+    <button class="btn-login" id="btn-login" onclick="attemptLogin()">Login →</button>
+    <div class="error-msg" id="error-msg"></div>
+    <div class="hint">Hint: username <span>human</span> · password <span>robot123</span></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   PARTICLES
+════════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('particles-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor() { this.reset(true); }
+    reset(initial = false) {
+      this.x = Math.random() * W;
+      this.y = initial ? Math.random() * H : H + 10;
+      this.r = 1.2 + Math.random() * 2.5;
+      this.speed = 0.18 + Math.random() * 0.45;
+      this.drift = (Math.random() - 0.5) * 0.4;
+      this.alpha = 0.08 + Math.random() * 0.35;
+      this.hue = 195 + Math.random() * 60;
+    }
+    update() {
+      this.y -= this.speed;
+      this.x += this.drift;
+      if (this.y < -10) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < 90; i++) particles.push(new Particle());
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) { p.update(); p.draw(); }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ════════════════════════════════════════════
+   ROBOT STATE
+════════════════════════════════════════════ */
+const robot = {
+  state: 'idle', // idle | username | password | angry | celebrate
+  targetPupilLx: 0, targetPupilLy: 0,
+  targetPupilRx: 0, targetPupilRy: 0,
+  currentLx: 0, currentLy: 0,
+  currentRx: 0, currentRy: 0,
+};
+
+// Eye socket centers in SVG coords
+const EYE_L = { cx: 67, cy: 76, maxR: 6 };
+const EYE_R = { cx: 113, cy: 76, maxR: 6 };
+
+// SVG elements
+const svg          = document.getElementById('robot-svg');
+const pupilLGroup  = document.getElementById('pupil-l-group');
+const pupilRGroup  = document.getElementById('pupil-r-group');
+const pupilL       = document.getElementById('pupil-l');
+const pupilR       = document.getElementById('pupil-r');
+const shineL       = document.getElementById('shine-l');
+const shineR       = document.getElementById('shine-r');
+const handL        = document.getElementById('hand-l');
+const handR        = document.getElementById('hand-r');
+const blushL       = document.getElementById('blush-l');
+const blushR       = document.getElementById('blush-r');
+const mouthNeutral = document.getElementById('mouth-neutral');
+const mouthSmile   = document.getElementById('mouth-smile');
+const mouthAngry   = document.getElementById('mouth-angry');
+const mouthExcited = document.getElementById('mouth-excited');
+const browsAngry   = document.getElementById('brows-angry');
+const antennaBall  = document.getElementById('antenna-ball');
+const light1       = document.getElementById('light1');
+const light2       = document.getElementById('light2');
+const light3       = document.getElementById('light3');
+
+function svgPoint(clientX, clientY) {
+  const rect = svg.getBoundingClientRect();
+  const scaleX = 180 / rect.width;
+  const scaleY = 200 / rect.height;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top)  * scaleY,
+  };
+}
+
+function clampPupil(eye, tx, ty) {
+  const dx = tx - eye.cx;
+  const dy = ty - eye.cy;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const clamped = Math.min(dist, eye.maxR);
+  const angle = Math.atan2(dy, dx);
+  return {
+    x: eye.cx + Math.cos(angle) * clamped,
+    y: eye.cy + Math.sin(angle) * clamped,
+  };
+}
+
+function setPupils(lx, ly, rx, ry) {
+  const lp = clampPupil(EYE_L, lx, ly);
+  const rp = clampPupil(EYE_R, rx, ry);
+  pupilLGroup.setAttribute('transform', `translate(${lp.x - EYE_L.cx}, ${lp.y - EYE_L.cy})`);
+  pupilRGroup.setAttribute('transform', `translate(${rp.x - EYE_R.cx}, ${rp.y - EYE_R.cy})`);
+}
+
+// Lerp pupils smoothly
+let animFrame;
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function animPupils() {
+  robot.currentLx = lerp(robot.currentLx, robot.targetPupilLx, 0.12);
+  robot.currentLy = lerp(robot.currentLy, robot.targetPupilLy, 0.12);
+  robot.currentRx = lerp(robot.currentRx, robot.targetPupilRx, 0.12);
+  robot.currentRy = lerp(robot.currentRy, robot.targetPupilRy, 0.12);
+  setPupils(robot.currentLx, robot.currentLy, robot.currentRx, robot.currentRy);
+  requestAnimationFrame(animPupils);
+}
+animPupils();
+
+// Initialize pupils to center
+robot.targetPupilLx = robot.currentLx = EYE_L.cx;
+robot.targetPupilLy = robot.currentLy = EYE_L.cy;
+robot.targetPupilRx = robot.currentRx = EYE_R.cx;
+robot.targetPupilRy = robot.currentRy = EYE_R.cy;
+
+/* ── Mouse move → follow cursor ── */
+document.addEventListener('mousemove', (e) => {
+  if (robot.state === 'password' || robot.state === 'angry' || robot.state === 'celebrate') return;
+  const pt = svgPoint(e.clientX, e.clientY);
+  robot.targetPupilLx = pt.x;
+  robot.targetPupilLy = pt.y;
+  robot.targetPupilRx = pt.x;
+  robot.targetPupilRy = pt.y;
+});
+
+/* ════════════════════════════════════════════
+   ROBOT STATE TRANSITIONS
+════════════════════════════════════════════ */
+function transition(attr, from, to, ms) {
+  // SVG doesn't support CSS transitions natively for all attrs, so we tween
+  const start = parseFloat(from);
+  const end   = parseFloat(to);
+  const t0 = performance.now();
+  function step(t) {
+    const p = Math.min((t - t0) / ms, 1);
+    const ease = p < 0.5 ? 2*p*p : -1+(4-2*p)*p; // easeInOut
+    const val = start + (end - start) * ease;
+    attr.element.setAttribute(attr.name, val);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function setMouth(which) {
+  mouthNeutral.setAttribute('opacity', which === 'neutral' ? '1' : '0');
+  mouthSmile.setAttribute('opacity',   which === 'smile'   ? '1' : '0');
+  mouthAngry.setAttribute('opacity',   which === 'angry'   ? '1' : '0');
+  mouthExcited.setAttribute('opacity', which === 'excited' ? '1' : '0');
+}
+
+function setBlush(show) {
+  blushL.setAttribute('opacity', show ? '1' : '0');
+  blushR.setAttribute('opacity', show ? '1' : '0');
+}
+
+function setHands(show) {
+  handL.setAttribute('opacity', show ? '1' : '0');
+  handR.setAttribute('opacity', show ? '1' : '0');
+}
+
+function setAngryBrows(show) {
+  browsAngry.setAttribute('opacity', show ? '1' : '0');
+}
+
+function setEyeColor(color) {
+  pupilL.setAttribute('fill', color);
+  pupilR.setAttribute('fill', color);
+}
+
+function enterIdle() {
+  robot.state = 'idle';
+  setMouth('neutral');
+  setBlush(false);
+  setHands(false);
+  setAngryBrows(false);
+  setEyeColor('#4f9cff');
+  antennaBall.setAttribute('fill', '#4f9cff');
+}
+
+function enterUsername() {
+  if (robot.state === 'angry') return;
+  robot.state = 'username';
+  setMouth('smile');
+  setBlush(true);
+  setHands(false);
+  setAngryBrows(false);
+  setEyeColor('#4f9cff');
+  antennaBall.setAttribute('fill', '#4fefaa');
+  // Look at input field
+  robot.targetPupilLx = 90;
+  robot.targetPupilLy = 115;
+  robot.targetPupilRx = 90;
+  robot.targetPupilRy = 115;
+}
+
+function enterPassword() {
+  if (robot.state === 'angry') return;
+  robot.state = 'password';
+  setMouth('neutral');
+  setBlush(false);
+  setHands(true);
+  setAngryBrows(false);
+  setEyeColor('#4f9cff');
+  antennaBall.setAttribute('fill', '#ff9f4f');
+}
+
+function enterAngry() {
+  robot.state = 'angry';
+  setMouth('angry');
+  setBlush(false);
+  setHands(false);
+  setAngryBrows(true);
+  setEyeColor('#ff4f6b');
+  antennaBall.setAttribute('fill', '#ff4f6b');
+  robot.targetPupilLx = 90;
+  robot.targetPupilLy = 85;
+  robot.targetPupilRx = 90;
+  robot.targetPupilRy = 85;
+
+  // Shake chest lights red
+  light1.setAttribute('fill', '#ff4f6b');
+  light2.setAttribute('fill', '#ff4f6b');
+  light3.setAttribute('fill', '#ff4f6b');
+
+  setTimeout(() => {
+    if (robot.state === 'angry') {
+      enterIdle();
+      light1.setAttribute('fill', '#4f9cff');
+      light2.setAttribute('fill', '#a78bfa');
+      light3.setAttribute('fill', '#4f9cff');
+    }
+  }, 2200);
+}
+
+function enterCelebrate() {
+  robot.state = 'celebrate';
+  setMouth('excited');
+  setBlush(true);
+  setHands(false);
+  setAngryBrows(false);
+  setEyeColor('#4fefaa');
+  antennaBall.setAttribute('fill', '#ffd700');
+  // Eyes look up in joy
+  robot.targetPupilLx = 67;
+  robot.targetPupilLy = 68;
+  robot.targetPupilRx = 113;
+  robot.targetPupilRy = 68;
+  light1.setAttribute('fill', '#ffd700');
+  light2.setAttribute('fill', '#4fefaa');
+  light3.setAttribute('fill', '#ffd700');
+}
+
+/* ════════════════════════════════════════════
+   INPUT EVENTS
+════════════════════════════════════════════ */
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+
+usernameInput.addEventListener('focus', () => enterUsername());
+usernameInput.addEventListener('blur',  () => { if (robot.state === 'username') enterIdle(); });
+passwordInput.addEventListener('focus', () => enterPassword());
+passwordInput.addEventListener('blur',  () => { if (robot.state === 'password') enterIdle(); });
+
+/* ════════════════════════════════════════════
+   LOGIN LOGIC
+════════════════════════════════════════════ */
+const VALID_USER = 'human';
+const VALID_PASS = 'robot123';
+
+function attemptLogin() {
+  const u = usernameInput.value.trim();
+  const p = passwordInput.value;
+  const errEl = document.getElementById('error-msg');
+  const card   = document.getElementById('login-card');
+
+  errEl.textContent = '';
+
+  if (u === VALID_USER && p === VALID_PASS) {
+    // SUCCESS
+    usernameInput.blur();
+    passwordInput.blur();
+    enterCelebrate();
+    card.classList.remove('shake');
+    card.classList.add('celebrate');
+    setTimeout(() => {
+      startConfetti();
+      document.getElementById('success-overlay').classList.add('show');
+    }, 650);
+    card.addEventListener('animationend', () => {
+      card.classList.remove('celebrate');
+    }, { once: true });
+  } else {
+    // FAIL
+    usernameInput.blur();
+    passwordInput.blur();
+    enterAngry();
+    card.classList.remove('shake');
+    void card.offsetWidth; // reflow
+    card.classList.add('shake');
+    card.addEventListener('animationend', () => {
+      card.classList.remove('shake');
+    }, { once: true });
+
+    if (!u || u !== VALID_USER) {
+      errEl.textContent = '⚠️ Who even are you? Username not found!';
+    } else {
+      errEl.textContent = '🔒 Wrong password! Do you even know your own secrets?';
+    }
+  }
+}
+
+// Allow Enter key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+/* ════════════════════════════════════════════
+   CONFETTI
+════════════════════════════════════════════ */
+const confCanvas = document.getElementById('confetti-canvas');
+const confCtx = confCanvas.getContext('2d');
+let confettiPieces = [];
+let confettiRunning = false;
+
+function startConfetti() {
+  confCanvas.width = window.innerWidth;
+  confCanvas.height = window.innerHeight;
+  confettiPieces = [];
+  for (let i = 0; i < 180; i++) confettiPieces.push(makeConf());
+  if (!confettiRunning) { confettiRunning = true; confettiLoop(); }
+}
+
+function makeConf() {
+  const colors = ['#4f9cff','#a78bfa','#ffd700','#ff6b9d','#4fefaa','#ff9f4f','#fff'];
+  return {
+    x: Math.random() * window.innerWidth,
+    y: -10 - Math.random() * 200,
+    w: 7 + Math.random() * 9,
+    h: 5 + Math.random() * 6,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rotation: Math.random() * 360,
+    rotSpeed: (Math.random() - 0.5) * 8,
+    speedY: 2.5 + Math.random() * 4,
+    speedX: (Math.random() - 0.5) * 3,
+    opacity: 0.85 + Math.random() * 0.15,
+  };
+}
+
+function confettiLoop() {
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  let alive = false;
+  for (const c of confettiPieces) {
+    c.y += c.speedY;
+    c.x += c.speedX;
+    c.rotation += c.rotSpeed;
+    confCtx.save();
+    confCtx.translate(c.x, c.y);
+    confCtx.rotate(c.rotation * Math.PI / 180);
+    confCtx.globalAlpha = c.opacity;
+    confCtx.fillStyle = c.color;
+    confCtx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+    confCtx.restore();
+    if (c.y < confCanvas.height + 20) alive = true;
+  }
+  if (alive) requestAnimationFrame(confettiLoop);
+  else { confettiRunning = false; confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height); }
+}
+
+/* ════════════════════════════════════════════
+   RESET
+════════════════════════════════════════════ */
+function resetPage() {
+  document.getElementById('success-overlay').classList.remove('show');
+  confettiPieces = [];
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  confettiRunning = false;
+  usernameInput.value = '';
+  passwordInput.value = '';
+  document.getElementById('error-msg').textContent = '';
+  enterIdle();
+  light1.setAttribute('fill', '#4f9cff');
+  light2.setAttribute('fill', '#a78bfa');
+  light3.setAttribute('fill', '#4f9cff');
+}
+
+/* ════════════════════════════════════════════
+   CHEST LIGHTS PULSE ANIMATION
+════════════════════════════════════════════ */
+let lightPhase = 0;
+(function pulseLights() {
+  lightPhase += 0.04;
+  const a1 = 0.6 + 0.35 * Math.sin(lightPhase);
+  const a2 = 0.6 + 0.35 * Math.sin(lightPhase + 2.1);
+  const a3 = 0.6 + 0.35 * Math.sin(lightPhase + 4.2);
+  light1.setAttribute('opacity', a1);
+  light2.setAttribute('opacity', a2);
+  light3.setAttribute('opacity', a3);
+  requestAnimationFrame(pulseLights);
+})();
+
+/* ════════════════════════════════════════════
+   ANTENNA WOBBLE
+════════════════════════════════════════════ */
+let antPhase = 0;
+(function wobbleAntenna() {
+  antPhase += 0.05;
+  const wobble = Math.sin(antPhase) * 4;
+  document.getElementById('antenna-ball').setAttribute('cx', 90 + wobble);
+  document.getElementById('antenna-line').setAttribute('x2', 90 + wobble);
+  requestAnimationFrame(wobbleAntenna);
+})();
+</script>
+</body>
+</html>
